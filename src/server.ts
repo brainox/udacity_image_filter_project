@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-import express from 'express';
+import express, {Request, Response} from 'express';
 import bodyParser from 'body-parser';
 import {filterImageFromURL, deleteLocalFiles} from './util/util';
 
@@ -35,25 +35,28 @@ import {filterImageFromURL, deleteLocalFiles} from './util/util';
   
   // Root Endpoint
   // Displays a simple message to the user
-  app.get( "/", async ( req, res ) => {
+  app.get( "/", async ( req: Request, res: Response ) => {
     res.send("try GET /filteredimage?image_url={{}}")
   } );
 
-  app.get("/filteredimage", async (req, res) => {
+  app.get("/filteredimage", async (req: Request, res: Response) => {
     if (req.query.image_url) {
-      const image_url = req.query.image_url
-      const image = await filterImageFromURL(image_url);
-      res.sendFile(image)
-    } else {
-      res.status(400).send("Url is not valid")
+      try {
+        const image_url: string = req.query.image_url
+        const image = await filterImageFromURL(image_url);
+        res.sendFile(image)
+      } catch (error) {
+        res.status(400).send("Url is not valid")
     }
+  } else {
+    res.status(400).send("Please enter an image url")
+  }
     res.on("finish", async () => {  
       const testFolder = __dirname + '/util/tmp/';
       const fileArr: string[] = []
       fs.readdirSync(testFolder).forEach((file: string) => {
         fileArr.push(path.resolve('./src/util/tmp/' + file));
       });
-      console.log(fileArr);
       await deleteLocalFiles(fileArr)
     });
   });
